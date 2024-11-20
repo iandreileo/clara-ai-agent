@@ -1,0 +1,40 @@
+version: "3.8"
+services:
+  ai-agents:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+      - "8501:8501" # Streamlit port, comment to run FastAPI only
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://${HOST}:${PORT}${API_VERSION_STR}/health/",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - db
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+volumes:
+  postgres_data:
